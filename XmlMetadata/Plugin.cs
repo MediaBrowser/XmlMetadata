@@ -1,7 +1,7 @@
-﻿using System;
-using MediaBrowser.Common.Configuration;
+﻿using MediaBrowser.Common.Configuration;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Serialization;
+using System;
 using XmlMetadata.Configuration;
 
 namespace XmlMetadata

@@ -1,12 +1,11 @@
-﻿using System;
-using System.Xml;
-using MediaBrowser.Controller.Entities.TV;
-using MediaBrowser.Controller.Library;
+﻿using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Xml;
+using System;
+using System.Xml;
 
 namespace MediaBrowser.LocalMetadata.Parsers
 {

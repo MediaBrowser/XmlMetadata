@@ -2,14 +2,12 @@
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.LocalMetadata.Parsers;
 using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Xml;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
-
-using MediaBrowser.Controller.IO;
-using MediaBrowser.Model.IO;
-using MediaBrowser.Model.Xml;
 
 namespace MediaBrowser.LocalMetadata.Providers
 {

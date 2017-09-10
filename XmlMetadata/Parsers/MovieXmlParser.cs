@@ -1,10 +1,10 @@
 ﻿using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Logging;
-using System.Xml;
 using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Xml;
+using System.Xml;
 
 namespace MediaBrowser.LocalMetadata.Parsers
 {
