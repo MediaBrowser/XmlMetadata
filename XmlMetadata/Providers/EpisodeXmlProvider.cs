@@ -1,6 +1,5 @@
 ﻿using MediaBrowser.Controller.Entities.TV;
 using MediaBrowser.Controller.Providers;
-using MediaBrowser.LocalMetadata.Parsers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
@@ -8,19 +7,18 @@ using MediaBrowser.Model.Xml;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading;
+using XmlMetadata.Parsers;
 
-namespace MediaBrowser.LocalMetadata.Providers
+namespace XmlMetadata.Providers
 {
     public class EpisodeXmlProvider : BaseXmlProvider<Episode>
     {
-        private readonly ILogger _logger;
         private readonly IProviderManager _providerManager;
         private readonly IXmlReaderSettingsFactory _xmlSettings;
 
         public EpisodeXmlProvider(IFileSystem fileSystem, ILogger logger, IProviderManager providerManager, IXmlReaderSettingsFactory xmlSettings)
-            : base(fileSystem)
+            : base(fileSystem, logger)
         {
-            _logger = logger;
             _providerManager = providerManager;
             _xmlSettings = xmlSettings;
         }
@@ -30,7 +28,7 @@ namespace MediaBrowser.LocalMetadata.Providers
             var images = new List<LocalImageInfo>();
             var chapters = new List<ChapterInfo>();
 
-            new EpisodeXmlParser(_logger, FileSystem, _providerManager, _xmlSettings).Fetch(result, images, path, cancellationToken);
+            new EpisodeXmlParser(Logger, FileSystem, _providerManager, _xmlSettings).Fetch(result, images, path, cancellationToken);
 
             result.Images = images;
         }

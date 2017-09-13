@@ -1,31 +1,29 @@
 ﻿using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
-using MediaBrowser.LocalMetadata.Parsers;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Xml;
 using System.IO;
 using System.Threading;
+using XmlMetadata.Parsers;
 
-namespace MediaBrowser.LocalMetadata.Providers
+namespace XmlMetadata.Providers
 {
     public class MovieXmlProvider : BaseXmlProvider<Movie>
     {
-        private readonly ILogger _logger;
         private readonly IProviderManager _providerManager;
         protected IXmlReaderSettingsFactory XmlReaderSettingsFactory { get; private set; }
 
         public MovieXmlProvider(IFileSystem fileSystem, ILogger logger, IProviderManager providerManager, IXmlReaderSettingsFactory xmlReaderSettingsFactory)
-            : base(fileSystem)
+            : base(fileSystem, logger)
         {
-            _logger = logger;
             _providerManager = providerManager;
             XmlReaderSettingsFactory = xmlReaderSettingsFactory;
         }
 
         protected override void Fetch(MetadataResult<Movie> result, string path, CancellationToken cancellationToken)
         {
-            new MovieXmlParser(_logger, _providerManager, XmlReaderSettingsFactory, FileSystem).Fetch(result, path, cancellationToken);
+            new MovieXmlParser(Logger, _providerManager, XmlReaderSettingsFactory, FileSystem).Fetch(result, path, cancellationToken);
         }
 
         protected override FileSystemMetadata GetXmlFile(ItemInfo info, IDirectoryService directoryService)

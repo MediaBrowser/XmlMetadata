@@ -6,7 +6,7 @@ using MediaBrowser.Model.Xml;
 using System;
 using System.Xml;
 
-namespace MediaBrowser.LocalMetadata.Parsers
+namespace XmlMetadata.Parsers
 {
     public class MusicVideoXmlParser : BaseVideoXmlParser<MusicVideo>
     {

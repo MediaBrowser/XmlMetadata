@@ -11,7 +11,7 @@ using System.IO;
 using System.Threading;
 using System.Xml;
 
-namespace MediaBrowser.LocalMetadata.Parsers
+namespace XmlMetadata.Parsers
 {
     /// <summary>
     /// Class EpisodeXmlParser

@@ -2,12 +2,12 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard1.3;</TargetFrameworks>
-    <AssemblyVersion>3.1.1.0</AssemblyVersion>
-    <FileVersion>3.1.1.0</FileVersion>
+    <AssemblyVersion>3.1.2.0</AssemblyVersion>
+    <FileVersion>3.1.2.0</FileVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="mediabrowser.server.core" Version="3.3.4-beta" />
+    <PackageReference Include="mediabrowser.server.core" Version="3.3.6-beta" />
   </ItemGroup>
 
 </Project>

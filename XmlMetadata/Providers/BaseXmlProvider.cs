@@ -4,15 +4,18 @@ using MediaBrowser.Model.IO;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
+using MediaBrowser.Model.Logging;
 
-namespace MediaBrowser.LocalMetadata
+namespace XmlMetadata.Providers
 {
     public abstract class BaseXmlProvider<T> : ILocalMetadataProvider<T>, IHasItemChangeMonitor, IHasOrder
         where T : IHasMetadata, new()
     {
         protected IFileSystem FileSystem;
 
-        public async Task<MetadataResult<T>> GetMetadata(ItemInfo info,
+        protected ILogger Logger;
+
+        public Task<MetadataResult<T>> GetMetadata(ItemInfo info,
             IDirectoryService directoryService,
             CancellationToken cancellationToken)
         {
@@ -22,10 +25,12 @@ namespace MediaBrowser.LocalMetadata
 
             if (file == null)
             {
-                return result;
+                return Task.FromResult(result);
             }
 
             var path = file.FullName;
+
+            Logger.Debug("{0} will fetch xml from {1}", GetType().Name, path);
 
             try
             {
@@ -43,14 +48,15 @@ namespace MediaBrowser.LocalMetadata
                 result.HasMetadata = false;
             }
 
-            return result;
+            return Task.FromResult(result);
         }
 
         protected abstract void Fetch(MetadataResult<T> result, string path, CancellationToken cancellationToken);
 
-        protected BaseXmlProvider(IFileSystem fileSystem)
+        protected BaseXmlProvider(IFileSystem fileSystem, ILogger logger)
         {
             FileSystem = fileSystem;
+            Logger = logger;
         }
 
         protected abstract FileSystemMetadata GetXmlFile(ItemInfo info, IDirectoryService directoryService);

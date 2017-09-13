@@ -6,7 +6,7 @@ using MediaBrowser.Model.Logging;
 using MediaBrowser.Model.Xml;
 using System.Xml;
 
-namespace MediaBrowser.LocalMetadata.Parsers
+namespace XmlMetadata.Parsers
 {
     /// <summary>
     /// Class EpisodeXmlParser

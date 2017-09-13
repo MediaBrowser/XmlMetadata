@@ -8,7 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
-namespace MediaBrowser.LocalMetadata.Images
+namespace XmlMetadata.Images
 {
     public class EpisodeLocalLocalImageProvider : ILocalImageFileProvider, IHasOrder
     {

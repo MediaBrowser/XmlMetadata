@@ -13,7 +13,7 @@ using System.Text;
 using System.Threading;
 using System.Xml;
 
-namespace MediaBrowser.LocalMetadata.Parsers
+namespace XmlMetadata.Parsers
 {
     /// <summary>
     /// Provides a base class for parsing metadata xml
@@ -396,7 +396,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
 
                 case "Director":
                     {
-                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new Controller.Entities.PersonInfo { Name = v.Trim(), Type = PersonType.Director }))
+                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.Director }))
                         {
                             if (string.IsNullOrWhiteSpace(p.Name))
                             {
@@ -408,7 +408,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
                     }
                 case "Writer":
                     {
-                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new Controller.Entities.PersonInfo { Name = v.Trim(), Type = PersonType.Writer }))
+                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.Writer }))
                         {
                             if (string.IsNullOrWhiteSpace(p.Name))
                             {
@@ -433,7 +433,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
                         else
                         {
                             // Old-style piped string
-                            foreach (var p in SplitNames(actors).Select(v => new Controller.Entities.PersonInfo { Name = v.Trim(), Type = PersonType.Actor }))
+                            foreach (var p in SplitNames(actors).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.Actor }))
                             {
                                 if (string.IsNullOrWhiteSpace(p.Name))
                                 {
@@ -447,7 +447,7 @@ namespace MediaBrowser.LocalMetadata.Parsers
 
                 case "GuestStars":
                     {
-                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new Controller.Entities.PersonInfo { Name = v.Trim(), Type = PersonType.GuestStar }))
+                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.GuestStar }))
                         {
                             if (string.IsNullOrWhiteSpace(p.Name))
                             {
