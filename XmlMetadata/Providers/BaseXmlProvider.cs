@@ -39,12 +39,14 @@ namespace XmlMetadata.Providers
                 Fetch(result, path, cancellationToken);
                 result.HasMetadata = true;
             }
-            catch (FileNotFoundException)
+            catch (FileNotFoundException e)
             {
+                Logger.ErrorException("Error parsing {0}", e, path);
                 result.HasMetadata = false;
             }
-            catch (IOException)
+            catch (IOException e)
             {
+                Logger.ErrorException("Error parsing {0}", e, path);
                 result.HasMetadata = false;
             }
 
