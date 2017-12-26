@@ -289,6 +289,7 @@ namespace XmlMetadata.Parsers
                     }
 
                 case "TagLines":
+                case "Taglines":
                     {
                         if (!reader.IsEmptyElement)
                         {
@@ -861,6 +862,7 @@ namespace XmlMetadata.Parsers
                     switch (reader.Name)
                     {
                         case "Tagline":
+                        case "TagLine":
                             {
                                 var val = reader.ReadElementContentAsString();
 
