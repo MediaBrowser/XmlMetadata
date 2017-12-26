@@ -15,7 +15,7 @@ namespace XmlMetadata
     ///// </summary>
     //public class PersonXmlSaver : BaseXmlSaver
     //{
-    //    public override bool IsEnabledFor(IHasMetadata item, ItemUpdateType updateType)
+    //    public override bool IsEnabledFor(BaseItem item, ItemUpdateType updateType)
     //    {
     //        if (!item.SupportsLocalMetadata)
     //        {
@@ -35,7 +35,7 @@ namespace XmlMetadata
     //        return list;
     //    }
 
-    //    protected override void WriteCustomElements(IHasMetadata item, XmlWriter writer)
+    //    protected override void WriteCustomElements(BaseItem item, XmlWriter writer)
     //    {
     //        var person = (Person)item;
 
@@ -45,7 +45,7 @@ namespace XmlMetadata
     //        }
     //    }
 
-    //    protected override string GetLocalSavePath(IHasMetadata item)
+    //    protected override string GetLocalSavePath(BaseItem item)
     //    {
     //        return Path.Combine(item.Path, "person.xml");
     //    }

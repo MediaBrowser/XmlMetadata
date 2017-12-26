@@ -1,10 +1,4 @@
-﻿using MediaBrowser.Controller.Entities;
-using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.Entities;
-using MediaBrowser.Model.IO;
-using MediaBrowser.Model.Logging;
-using MediaBrowser.Model.Xml;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -12,6 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Xml;
+using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.IO;
+using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Xml;
 
 namespace XmlMetadata.Parsers
 {
@@ -289,7 +289,6 @@ namespace XmlMetadata.Parsers
                     }
 
                 case "TagLines":
-                case "Taglines":
                     {
                         if (!reader.IsEmptyElement)
                         {
@@ -621,22 +620,6 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-                case "PlotKeywords":
-                    {
-                        if (!reader.IsEmptyElement)
-                        {
-                            using (var subtree = reader.ReadSubtree())
-                            {
-                                FetchFromKeywordsNode(subtree, item);
-                            }
-                        }
-                        else
-                        {
-                            reader.Read();
-                        }
-                        break;
-                    }
-
                 case "Persons":
                     {
                         if (!reader.IsEmptyElement)
@@ -877,7 +860,6 @@ namespace XmlMetadata.Parsers
                 {
                     switch (reader.Name)
                     {
-                        case "TagLine":
                         case "Tagline":
                             {
                                 var val = reader.ReadElementContentAsString();
@@ -945,6 +927,8 @@ namespace XmlMetadata.Parsers
             reader.MoveToContent();
             reader.Read();
 
+            var tags = new List<string>();
+
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
             {
@@ -958,7 +942,7 @@ namespace XmlMetadata.Parsers
 
                                 if (!string.IsNullOrWhiteSpace(tag))
                                 {
-                                    item.AddTag(tag);
+                                    tags.Add(tag);
                                 }
                                 break;
                             }
@@ -973,41 +957,8 @@ namespace XmlMetadata.Parsers
                     reader.Read();
                 }
             }
-        }
 
-        private void FetchFromKeywordsNode(XmlReader reader, BaseItem item)
-        {
-            reader.MoveToContent();
-            reader.Read();
-
-            // Loop through each element
-            while (!reader.EOF && reader.ReadState == ReadState.Interactive)
-            {
-                if (reader.NodeType == XmlNodeType.Element)
-                {
-                    switch (reader.Name)
-                    {
-                        case "PlotKeyword":
-                            {
-                                var tag = reader.ReadElementContentAsString();
-
-                                if (!string.IsNullOrWhiteSpace(tag))
-                                {
-                                    //item.AddKeyword(tag);
-                                }
-                                break;
-                            }
-
-                        default:
-                            reader.Skip();
-                            break;
-                    }
-                }
-                else
-                {
-                    reader.Read();
-                }
-            }
+            item.Tags = tags.Distinct(StringComparer.Ordinal).ToArray();
         }
 
         /// <summary>
@@ -1336,7 +1287,7 @@ namespace XmlMetadata.Parsers
         /// <param name="separators">The separators.</param>
         /// <param name="options">The options.</param>
         /// <returns>System.String[][].</returns>
-        private static string[] Split(string val, char[] separators, StringSplitOptions options)
+        private string[] Split(string val, char[] separators, StringSplitOptions options)
         {
             return val.Split(separators, options);
         }
