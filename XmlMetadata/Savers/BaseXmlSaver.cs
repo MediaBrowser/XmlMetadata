@@ -107,11 +107,9 @@ namespace XmlMetadata
                     "TVcomId",
                     "TvDbId",
                     "TVRageId",
-                    "Website",
                     "Zap2ItId",
                     "CollectionItems",
-                    "PlaylistItems",
-                    "Shares"
+                    "PlaylistItems"
 
         }.ToDictionary(i => i, StringComparer.OrdinalIgnoreCase);
 
@@ -207,15 +205,9 @@ namespace XmlMetadata
 
             var file = FileSystem.GetFileInfo(path);
 
-            var wasHidden = false;
-
             // This will fail if the file is hidden
             if (file.Exists)
             {
-                if (file.IsHidden)
-                {
-                    wasHidden = true;
-                }
                 FileSystem.SetAttributes(path, false, false);
             }
 
@@ -224,7 +216,7 @@ namespace XmlMetadata
                 stream.CopyTo(filestream);
             }
 
-            if (wasHidden || ConfigurationManager.Configuration.SaveMetadataHidden)
+            if (ConfigurationManager.Configuration.SaveMetadataHidden)
             {
                 SetHidden(path, true);
             }
@@ -417,10 +409,10 @@ namespace XmlMetadata
                 writer.WriteElementString("ProductionYear", item.ProductionYear.Value.ToString(UsCulture));
             }
 
-            if (!string.IsNullOrEmpty(item.HomePageUrl))
-            {
-                writer.WriteElementString("Website", item.HomePageUrl);
-            }
+            //if (!string.IsNullOrEmpty(item.HomePageUrl))
+            //{
+            //    writer.WriteElementString("Website", item.HomePageUrl);
+            //}
 
             var hasAspectRatio = item as IHasAspectRatio;
             if (hasAspectRatio != null)
@@ -469,7 +461,7 @@ namespace XmlMetadata
                 writer.WriteEndElement();
             }
 
-            if (item.Genres.Count > 0)
+            if (item.Genres.Length > 0)
             {
                 writer.WriteStartElement("Genres");
 

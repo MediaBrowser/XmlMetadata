@@ -253,18 +253,6 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-                case "Website":
-                    {
-                        var val = reader.ReadElementContentAsString();
-
-                        if (!string.IsNullOrWhiteSpace(val))
-                        {
-                            item.HomePageUrl = val;
-                        }
-
-                        break;
-                    }
-
                 case "LockedFields":
                     {
                         var val = reader.ReadElementContentAsString();
@@ -653,26 +641,6 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-                case "Shares":
-                    {
-                        if (!reader.IsEmptyElement)
-                        {
-                            using (var subtree = reader.ReadSubtree())
-                            {
-                                var hasShares = item as IHasShares;
-                                if (hasShares != null)
-                                {
-                                    FetchFromSharesNode(subtree, hasShares);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            reader.Read();
-                        }
-                        break;
-                    }
-
                 case "Format3D":
                     {
                         var val = reader.ReadElementContentAsString();
@@ -725,48 +693,6 @@ namespace XmlMetadata.Parsers
                         break;
 
                     }
-            }
-        }
-
-        private void FetchFromSharesNode(XmlReader reader, IHasShares item)
-        {
-            reader.MoveToContent();
-            reader.Read();
-
-            // Loop through each element
-            while (!reader.EOF && reader.ReadState == ReadState.Interactive)
-            {
-                if (reader.NodeType == XmlNodeType.Element)
-                {
-                    switch (reader.Name)
-                    {
-                        case "Share":
-                            {
-                                if (reader.IsEmptyElement)
-                                {
-                                    reader.Read();
-                                    continue;
-                                }
-                                using (var subtree = reader.ReadSubtree())
-                                {
-                                    var share = GetShareFromNode(subtree);
-                                    if (share != null)
-                                    {
-                                        item.Shares.Add(share);
-                                    }
-                                }
-                                break;
-                            }
-
-                        default:
-                            reader.Skip();
-                            break;
-                    }
-                }
-                else
-                {
-                    reader.Read();
-                }
             }
         }
 
