@@ -451,13 +451,9 @@ namespace XmlMetadata.Parsers
                     {
                         var val = reader.ReadElementContentAsString();
 
-                        var hasTrailers = item as IHasTrailers;
-                        if (hasTrailers != null)
+                        if (!string.IsNullOrWhiteSpace(val))
                         {
-                            if (!string.IsNullOrWhiteSpace(val))
-                            {
-                                hasTrailers.AddTrailerUrl(val);
-                            }
+                            item.AddTrailerUrl(val);
                         }
                         break;
                     }
@@ -483,11 +479,7 @@ namespace XmlMetadata.Parsers
                         {
                             using (var subtree = reader.ReadSubtree())
                             {
-                                var hasTrailers = item as IHasTrailers;
-                                if (hasTrailers != null)
-                                {
-                                    FetchDataFromTrailersNode(subtree, hasTrailers);
-                                }
+                                FetchDataFromTrailersNode(subtree, item);
                             }
                         }
                         else
@@ -940,7 +932,7 @@ namespace XmlMetadata.Parsers
             }
         }
 
-        private void FetchDataFromTrailersNode(XmlReader reader, IHasTrailers item)
+        private void FetchDataFromTrailersNode(XmlReader reader, T item)
         {
             reader.MoveToContent();
             reader.Read();
