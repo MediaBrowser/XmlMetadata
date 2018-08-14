@@ -503,30 +503,13 @@ namespace XmlMetadata
                 {
                     writer.WriteStartElement("Person");
                     writer.WriteElementString("Name", person.Name);
-                    writer.WriteElementString("Type", person.Type);
+                    writer.WriteElementString("Type", person.Type.ToString());
                     writer.WriteElementString("Role", person.Role);
-
-                    if (person.SortOrder.HasValue)
-                    {
-                        writer.WriteElementString("SortOrder", person.SortOrder.Value.ToString(UsCulture));
-                    }
 
                     writer.WriteEndElement();
                 }
 
                 writer.WriteEndElement();
-            }
-
-            var boxset = item as BoxSet;
-            if (boxset != null)
-            {
-                AddLinkedChildren(boxset, writer, "CollectionItems", "CollectionItem");
-            }
-
-            var playlist = item as Playlist;
-            if (playlist != null)
-            {
-                AddLinkedChildren(playlist, writer, "PlaylistItems", "PlaylistItem");
             }
 
             var hasShares = item as IHasShares;
@@ -588,37 +571,6 @@ namespace XmlMetadata
                     }
                 }
             }
-        }
-
-        public static void AddLinkedChildren(Folder item, XmlWriter writer, string pluralNodeName, string singularNodeName)
-        {
-            var items = item.LinkedChildren
-                .Where(i => i.Type == LinkedChildType.Manual)
-                .ToList();
-
-            if (items.Count == 0)
-            {
-                return;
-            }
-
-            writer.WriteStartElement(pluralNodeName);
-
-            foreach (var link in items)
-            {
-                if (!string.IsNullOrWhiteSpace(link.Path))
-                {
-                    writer.WriteStartElement(singularNodeName);
-                    writer.WriteElementString("Path", link.Path);
-                    writer.WriteEndElement();
-                }
-            }
-
-            writer.WriteEndElement();
-        }
-
-        private static bool IsPersonType(PersonInfo person, string type)
-        {
-            return string.Equals(person.Type, type, StringComparison.OrdinalIgnoreCase) || string.Equals(person.Role, type, StringComparison.OrdinalIgnoreCase);
         }
 
         private void AddCustomTags(string path, List<string> xmlTagsUsed, XmlWriter writer, ILogger logger, IFileSystem fileSystem)

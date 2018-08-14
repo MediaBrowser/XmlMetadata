@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Xml;
+using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
@@ -276,7 +277,7 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-                case "TagLines":
+                 case "TagLines":
                 case "Taglines":
                     {
                         if (!reader.IsEmptyElement)
@@ -633,6 +634,26 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
+                case "Shares":
+                    {
+                        if (!reader.IsEmptyElement)
+                        {
+                            using (var subtree = reader.ReadSubtree())
+                            {
+                                var hasShares = item as IHasShares;
+                                if (hasShares != null)
+                                {
+                                    FetchFromSharesNode(subtree, hasShares);
+                                }
+                            }
+                        }
+                        else
+                        {
+                            reader.Read();
+                        }
+                        break;
+                    }
+
                 case "Format3D":
                     {
                         var val = reader.ReadElementContentAsString();
@@ -686,6 +707,55 @@ namespace XmlMetadata.Parsers
 
                     }
             }
+        }
+        private void FetchFromSharesNode(XmlReader reader, IHasShares item)
+        {
+            var list = new List<Share>();
+
+            reader.MoveToContent();
+            reader.Read();
+
+            // Loop through each element
+            while (!reader.EOF && reader.ReadState == ReadState.Interactive)
+            {
+                if (reader.NodeType == XmlNodeType.Element)
+                {
+                    switch (reader.Name)
+                    {
+                        case "Share":
+                            {
+                                if (reader.IsEmptyElement)
+                                {
+                                    reader.Read();
+                                    continue;
+                                }
+
+                                using (var subReader = reader.ReadSubtree())
+                                {
+                                    var child = GetShare(subReader);
+
+                                    if (child != null)
+                                    {
+                                        list.Add(child);
+                                    }
+                                }
+
+                                break;
+                            }
+                        default:
+                            {
+                                reader.Skip();
+                                break;
+                            }
+                    }
+                }
+                else
+                {
+                    reader.Read();
+                }
+            }
+
+            item.Shares = list.ToArray();
         }
 
         private Share GetShareFromNode(XmlReader reader)
@@ -779,7 +849,7 @@ namespace XmlMetadata.Parsers
                 {
                     switch (reader.Name)
                     {
-                        case "Tagline":
+                         case "Tagline":
                         case "TagLine":
                             {
                                 var val = reader.ReadElementContentAsString();
@@ -1039,7 +1109,11 @@ namespace XmlMetadata.Parsers
 
                                 if (!string.IsNullOrWhiteSpace(val))
                                 {
-                                    type = val;
+                                    PersonType personType;
+                                    if (Enum.TryParse<PersonType>(val, true, out personType))
+                                    {
+                                        type = personType;
+                                    }
                                 }
                                 break;
                             }
@@ -1084,8 +1158,7 @@ namespace XmlMetadata.Parsers
             {
                 Name = name.Trim(),
                 Role = role,
-                Type = type,
-                SortOrder = sortOrder
+                Type = type
             };
 
             return new[] { personInfo };
@@ -1093,10 +1166,7 @@ namespace XmlMetadata.Parsers
 
         protected LinkedChild GetLinkedChild(XmlReader reader)
         {
-            var linkedItem = new LinkedChild
-            {
-                Type = LinkedChildType.Manual
-            };
+            var linkedItem = new LinkedChild();
 
             reader.MoveToContent();
             reader.Read();
@@ -1113,6 +1183,15 @@ namespace XmlMetadata.Parsers
                                 linkedItem.Path = reader.ReadElementContentAsString();
                                 break;
                             }
+                        case "ItemId":
+                            {
+                                var libraryItemId = reader.ReadElementContentAsString();
+                                if (!string.IsNullOrEmpty(libraryItemId))
+                                {
+                                    linkedItem.LibraryItemId = new Guid(libraryItemId);
+                                }
+                                break;
+                            }
 
                         default:
                             reader.Skip();
@@ -1126,7 +1205,7 @@ namespace XmlMetadata.Parsers
             }
 
             // This is valid
-            if (!string.IsNullOrWhiteSpace(linkedItem.Path))
+            if (!string.IsNullOrWhiteSpace(linkedItem.Path) || !linkedItem.LibraryItemId.Equals(Guid.Empty))
             {
                 return linkedItem;
             }
@@ -1197,7 +1276,7 @@ namespace XmlMetadata.Parsers
 
             value = value.Trim().Trim(separator);
 
-            return string.IsNullOrWhiteSpace(value) ? new string[] { } : Split(value, separator, StringSplitOptions.RemoveEmptyEntries);
+            return string.IsNullOrWhiteSpace(value) ? Array.Empty<string>() : Split(value, separator, StringSplitOptions.RemoveEmptyEntries);
         }
 
         /// <summary>
