@@ -493,7 +493,7 @@ namespace XmlMetadata
                 writer.WriteEndElement();
             }
 
-            var people = libraryManager.GetPeople(item);
+            var people = libraryManager.GetItemPeople(item);
 
             if (people.Count > 0)
             {
