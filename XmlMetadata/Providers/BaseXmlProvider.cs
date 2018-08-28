@@ -72,7 +72,7 @@ namespace XmlMetadata.Providers
                 return false;
             }
 
-            return file.Exists && FileSystem.GetLastWriteTimeUtc(file) > item.DateLastSaved;
+            return file.Exists && item.IsGreaterThanDateLastSaved(FileSystem.GetLastWriteTimeUtc(file));
         }
 
         public string Name

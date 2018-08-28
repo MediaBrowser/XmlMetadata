@@ -302,7 +302,7 @@ namespace XmlMetadata
                 writer.WriteElementString("ContentRating", item.OfficialRating);
             }
 
-            writer.WriteElementString("Added", item.DateCreated.ToLocalTime().ToString("G"));
+            writer.WriteElementString("Added", item.DateCreated.LocalDateTime.ToString("G"));
 
             writer.WriteElementString("LockData", item.IsLocked.ToString().ToLower());
 
@@ -345,11 +345,11 @@ namespace XmlMetadata
             {
                 if (item is Person)
                 {
-                    writer.WriteElementString("BirthDate", item.PremiereDate.Value.ToLocalTime().ToString("yyyy-MM-dd"));
+                    writer.WriteElementString("BirthDate", item.PremiereDate.Value.LocalDateTime.ToString("yyyy-MM-dd"));
                 }
                 else if (!(item is Episode))
                 {
-                    writer.WriteElementString("PremiereDate", item.PremiereDate.Value.ToLocalTime().ToString("yyyy-MM-dd"));
+                    writer.WriteElementString("PremiereDate", item.PremiereDate.Value.LocalDateTime.ToString("yyyy-MM-dd"));
                 }
             }
 
@@ -357,11 +357,11 @@ namespace XmlMetadata
             {
                 if (item is Person)
                 {
-                    writer.WriteElementString("DeathDate", item.EndDate.Value.ToLocalTime().ToString("yyyy-MM-dd"));
+                    writer.WriteElementString("DeathDate", item.EndDate.Value.LocalDateTime.ToString("yyyy-MM-dd"));
                 }
                 else if (!(item is Episode))
                 {
-                    writer.WriteElementString("EndDate", item.EndDate.Value.ToLocalTime().ToString("yyyy-MM-dd"));
+                    writer.WriteElementString("EndDate", item.EndDate.Value.LocalDateTime.ToString("yyyy-MM-dd"));
                 }
             }
 
