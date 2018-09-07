@@ -3,10 +3,12 @@ using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Serialization;
 using System;
 using XmlMetadata.Configuration;
+using System.IO;
+using MediaBrowser.Model.Drawing;
 
 namespace XmlMetadata
 {
-    public class Plugin : BasePlugin<PluginConfiguration>
+    public class Plugin : BasePlugin<PluginConfiguration>, IHasThumbImage
     {
         public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer) : base(applicationPaths, xmlSerializer)
         {
@@ -41,6 +43,20 @@ namespace XmlMetadata
             get
             {
                 return "Supports Emby Legacy Xml metadata";
+            }
+        }
+
+        public Stream GetThumbImage()
+        {
+            var type = GetType();
+            return type.Assembly.GetManifestResourceStream(type.Namespace + ".thumb.png");
+        }
+
+        public ImageFormat ThumbImageFormat
+        {
+            get
+            {
+                return ImageFormat.Png;
             }
         }
     }
