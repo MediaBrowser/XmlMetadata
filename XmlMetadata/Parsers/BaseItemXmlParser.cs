@@ -532,9 +532,9 @@ namespace XmlMetadata.Parsers
 
                         if (!string.IsNullOrWhiteSpace(firstAired))
                         {
-                            DateTime airDate;
+                            DateTimeOffset airDate;
 
-                            if (DateTime.TryParseExact(firstAired, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out airDate) && airDate.Year > 1850)
+                            if (DateTimeOffset.TryParseExact(firstAired, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out airDate) && airDate.Year > 1850)
                             {
                                 item.PremiereDate = airDate.ToUniversalTime();
                                 item.ProductionYear = airDate.Year;
@@ -551,9 +551,9 @@ namespace XmlMetadata.Parsers
 
                         if (!string.IsNullOrWhiteSpace(firstAired))
                         {
-                            DateTime airDate;
+                            DateTimeOffset airDate;
 
-                            if (DateTime.TryParseExact(firstAired, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out airDate) && airDate.Year > 1850)
+                            if (DateTimeOffset.TryParseExact(firstAired, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.AssumeLocal, out airDate) && airDate.Year > 1850)
                             {
                                 item.EndDate = airDate.ToUniversalTime();
                             }
