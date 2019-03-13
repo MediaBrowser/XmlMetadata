@@ -3,7 +3,7 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
-using MediaBrowser.Model.Xml;
+
 using System.Xml;
 
 namespace XmlMetadata.Parsers
@@ -44,21 +44,21 @@ namespace XmlMetadata.Parsers
             }
         }
 
-        public BaseVideoXmlParser(ILogger logger, IProviderManager providerManager, IXmlReaderSettingsFactory xmlReaderSettingsFactory, IFileSystem fileSystem) : base(logger, providerManager, xmlReaderSettingsFactory, fileSystem)
+        public BaseVideoXmlParser(ILogger logger, IProviderManager providerManager, IFileSystem fileSystem) : base(logger, providerManager, fileSystem)
         {
         }
     }
 
     public class MovieXmlParser : BaseVideoXmlParser<Movie>
     {
-        public MovieXmlParser(ILogger logger, IProviderManager providerManager, IXmlReaderSettingsFactory xmlReaderSettingsFactory, IFileSystem fileSystem) : base(logger, providerManager, xmlReaderSettingsFactory, fileSystem)
+        public MovieXmlParser(ILogger logger, IProviderManager providerManager, IFileSystem fileSystem) : base(logger, providerManager, fileSystem)
         {
         }
     }
 
     public class VideoXmlParser : BaseVideoXmlParser<Video>
     {
-        public VideoXmlParser(ILogger logger, IProviderManager providerManager, IXmlReaderSettingsFactory xmlReaderSettingsFactory, IFileSystem fileSystem) : base(logger, providerManager, xmlReaderSettingsFactory, fileSystem)
+        public VideoXmlParser(ILogger logger, IProviderManager providerManager, IFileSystem fileSystem) : base(logger, providerManager, fileSystem)
         {
         }
     }

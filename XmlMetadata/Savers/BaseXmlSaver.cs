@@ -21,7 +21,7 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Extensions;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
-using MediaBrowser.Model.Xml;
+
 
 namespace XmlMetadata
 {
@@ -113,7 +113,7 @@ namespace XmlMetadata
 
         }.ToDictionary(i => i, StringComparer.OrdinalIgnoreCase);
 
-        public BaseXmlSaver(IFileSystem fileSystem, IServerConfigurationManager configurationManager, ILibraryManager libraryManager, IUserManager userManager, IUserDataManager userDataManager, ILogger logger, IXmlReaderSettingsFactory xmlReaderSettingsFactory)
+        public BaseXmlSaver(IFileSystem fileSystem, IServerConfigurationManager configurationManager, ILibraryManager libraryManager, IUserManager userManager, IUserDataManager userDataManager, ILogger logger)
         {
             FileSystem = fileSystem;
             ConfigurationManager = configurationManager;
@@ -121,7 +121,7 @@ namespace XmlMetadata
             UserManager = userManager;
             UserDataManager = userDataManager;
             Logger = logger;
-            XmlReaderSettingsFactory = xmlReaderSettingsFactory;
+            
         }
 
         protected IFileSystem FileSystem { get; private set; }
@@ -130,7 +130,7 @@ namespace XmlMetadata
         protected IUserManager UserManager { get; private set; }
         protected IUserDataManager UserDataManager { get; private set; }
         protected ILogger Logger { get; private set; }
-        protected IXmlReaderSettingsFactory XmlReaderSettingsFactory { get; private set; }
+        
 
         protected ItemUpdateType MinimumUpdateType
         {
@@ -573,9 +573,21 @@ namespace XmlMetadata
             }
         }
 
+        private XmlReaderSettings Create(bool enableValidation)
+        {
+            var settings = new XmlReaderSettings();
+
+            if (!enableValidation)
+            {
+                settings.ValidationType = ValidationType.None;
+            }
+
+            return settings;
+        }
+
         private void AddCustomTags(string path, List<string> xmlTagsUsed, XmlWriter writer, ILogger logger, IFileSystem fileSystem)
         {
-            var settings = XmlReaderSettingsFactory.Create(false);
+            var settings = Create(false);
 
             settings.CheckCharacters = false;
             settings.IgnoreProcessingInstructions = true;

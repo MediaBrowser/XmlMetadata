@@ -6,7 +6,7 @@ using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.IO;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Logging;
-using MediaBrowser.Model.Xml;
+
 using XmlMetadata.Parsers;
 
 namespace XmlMetadata.Providers
@@ -17,18 +17,18 @@ namespace XmlMetadata.Providers
     public class FolderXmlProvider : BaseXmlProvider<Folder>
     {
         private readonly IProviderManager _providerManager;
-        protected IXmlReaderSettingsFactory XmlReaderSettingsFactory { get; private set; }
+        
 
-        public FolderXmlProvider(IFileSystem fileSystem, ILogger logger, IProviderManager providerManager, IXmlReaderSettingsFactory xmlReaderSettingsFactory)
+        public FolderXmlProvider(IFileSystem fileSystem, ILogger logger, IProviderManager providerManager)
             : base(fileSystem, logger)
         {
             _providerManager = providerManager;
-            XmlReaderSettingsFactory = xmlReaderSettingsFactory;
+            
         }
 
         protected override void Fetch(MetadataResult<Folder> result, string path, CancellationToken cancellationToken)
         {
-            new BaseItemXmlParser<Folder>(Logger, _providerManager, XmlReaderSettingsFactory, FileSystem).Fetch(result, path, cancellationToken);
+            new BaseItemXmlParser<Folder>(Logger, _providerManager, FileSystem).Fetch(result, path, cancellationToken);
         }
 
         protected override FileSystemMetadata GetXmlFile(ItemInfo info, IDirectoryService directoryService)

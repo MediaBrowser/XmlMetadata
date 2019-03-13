@@ -3,7 +3,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
-using MediaBrowser.Model.Xml;
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -21,8 +21,8 @@ namespace XmlMetadata.Parsers
         private List<LocalImageInfo> _imagesFound;
         private readonly IFileSystem _fileSystem;
 
-        public EpisodeXmlParser(ILogger logger, IFileSystem fileSystem, IProviderManager providerManager, IXmlReaderSettingsFactory xmlSettings)
-            : base(logger, providerManager, xmlSettings, fileSystem)
+        public EpisodeXmlParser(ILogger logger, IFileSystem fileSystem, IProviderManager providerManager)
+            : base(logger, providerManager, fileSystem)
         {
             _fileSystem = fileSystem;
         }

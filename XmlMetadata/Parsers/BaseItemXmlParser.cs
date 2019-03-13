@@ -12,7 +12,7 @@ using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
-using MediaBrowser.Model.Xml;
+
 
 namespace XmlMetadata.Parsers
 {
@@ -31,19 +31,31 @@ namespace XmlMetadata.Parsers
 
         private Dictionary<string, string> _validProviderIds;
 
-        protected IXmlReaderSettingsFactory XmlReaderSettingsFactory { get; private set; }
+        
         protected IFileSystem FileSystem { get; private set; }
 
         /// <summary>
         /// Initializes a new instance of the <see cref="BaseItemXmlParser{T}" /> class.
         /// </summary>
         /// <param name="logger">The logger.</param>
-        public BaseItemXmlParser(ILogger logger, IProviderManager providerManager, IXmlReaderSettingsFactory xmlReaderSettingsFactory, IFileSystem fileSystem)
+        public BaseItemXmlParser(ILogger logger, IProviderManager providerManager, IFileSystem fileSystem)
         {
             Logger = logger;
             ProviderManager = providerManager;
-            XmlReaderSettingsFactory = xmlReaderSettingsFactory;
+            
             FileSystem = fileSystem;
+        }
+
+        private XmlReaderSettings Create(bool enableValidation)
+        {
+            var settings = new XmlReaderSettings();
+
+            if (!enableValidation)
+            {
+                settings.ValidationType = ValidationType.None;
+            }
+
+            return settings;
         }
 
         /// <summary>
@@ -65,7 +77,7 @@ namespace XmlMetadata.Parsers
                 throw new ArgumentNullException();
             }
 
-            var settings = XmlReaderSettingsFactory.Create(false);
+            var settings = Create(false);
 
             settings.CheckCharacters = false;
             settings.IgnoreProcessingInstructions = true;
