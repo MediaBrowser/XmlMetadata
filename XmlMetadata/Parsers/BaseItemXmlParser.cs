@@ -471,21 +471,6 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-                case "DisplayOrder":
-                    {
-                        var val = reader.ReadElementContentAsString();
-
-                        var hasDisplayOrder = item as IHasDisplayOrder;
-                        if (hasDisplayOrder != null)
-                        {
-                            if (!string.IsNullOrWhiteSpace(val))
-                            {
-                                hasDisplayOrder.DisplayOrder = val;
-                            }
-                        }
-                        break;
-                    }
-
                 case "Trailers":
                     {
                         if (!reader.IsEmptyElement)

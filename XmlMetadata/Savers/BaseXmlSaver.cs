@@ -46,7 +46,6 @@ namespace XmlMetadata
                     "CustomRating",
                     "CriticRating",
                     "DeathDate",
-                    "DisplayOrder",
                     "EndDate",
                     "Genres",
                     "Genre",
@@ -387,12 +386,6 @@ namespace XmlMetadata
                 }
 
                 writer.WriteEndElement();
-            }
-
-            var hasDisplayOrder = item as IHasDisplayOrder;
-            if (hasDisplayOrder != null && !string.IsNullOrEmpty(hasDisplayOrder.DisplayOrder))
-            {
-                writer.WriteElementString("DisplayOrder", hasDisplayOrder.DisplayOrder);
             }
 
             if (item.CommunityRating.HasValue)
