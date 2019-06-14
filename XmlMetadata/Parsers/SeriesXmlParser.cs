@@ -51,6 +51,18 @@ namespace XmlMetadata.Parsers
                     }
                     break;
 
+                case "DisplayOrder":
+
+                    {
+                        var val = reader.ReadElementContentAsString();
+
+                        if (Enum.TryParse(val, true, out SeriesDisplayOrder seriesDisplayOrder))
+                        {
+                            item.DisplayOrder = seriesDisplayOrder;
+                        }
+                    }
+                    break;
+
                 case "Status":
                     {
                         var status = reader.ReadElementContentAsString();
