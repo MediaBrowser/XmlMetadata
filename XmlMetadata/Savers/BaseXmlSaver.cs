@@ -32,7 +32,6 @@ namespace XmlMetadata
         private static readonly Dictionary<string, string> CommonTags = new[] {
 
                     "Added",
-                    "AspectRatio",
                     "AudioDbAlbumId",
                     "AudioDbArtistId",
                     "BirthDate",
@@ -402,15 +401,6 @@ namespace XmlMetadata
             //{
             //    writer.WriteElementString("Website", item.HomePageUrl);
             //}
-
-            var hasAspectRatio = item as IHasAspectRatio;
-            if (hasAspectRatio != null)
-            {
-                if (!string.IsNullOrEmpty(hasAspectRatio.AspectRatio))
-                {
-                    writer.WriteElementString("AspectRatio", hasAspectRatio.AspectRatio);
-                }
-            }
 
             if (!string.IsNullOrEmpty(item.PreferredMetadataLanguage))
             {

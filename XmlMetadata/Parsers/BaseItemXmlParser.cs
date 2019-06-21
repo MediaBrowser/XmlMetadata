@@ -360,18 +360,6 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-                case "AspectRatio":
-                    {
-                        var val = reader.ReadElementContentAsString();
-
-                        var hasAspectRatio = item as IHasAspectRatio;
-                        if (!string.IsNullOrWhiteSpace(val) && hasAspectRatio != null)
-                        {
-                            hasAspectRatio.AspectRatio = val;
-                        }
-                        break;
-                    }
-
                 case "LockData":
                     {
                         var val = reader.ReadElementContentAsString();
