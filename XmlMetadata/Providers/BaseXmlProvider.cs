@@ -41,12 +41,10 @@ namespace XmlMetadata.Providers
             }
             catch (FileNotFoundException e)
             {
-                Logger.ErrorException("Error parsing {0}", e, path);
                 result.HasMetadata = false;
             }
             catch (IOException e)
             {
-                Logger.ErrorException("Error parsing {0}", e, path);
                 result.HasMetadata = false;
             }
 
