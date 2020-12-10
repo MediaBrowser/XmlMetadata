@@ -21,11 +21,11 @@ using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.Extensions;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
-
+using System.Threading.Tasks;
 
 namespace XmlMetadata
 {
-    public abstract class BaseXmlSaver : IMetadataFileSaver
+    public abstract class BaseXmlSaver : IMetadataSaver
     {
         private static readonly CultureInfo UsCulture = new CultureInfo("en-US");
 
@@ -181,9 +181,11 @@ namespace XmlMetadata
             return new List<string>();
         }
 
-        public void Save(BaseItem item, CancellationToken cancellationToken)
+        public async Task Save(BaseItem item, LibraryOptions libraryOptions, CancellationToken cancellationToken)
         {
-            var path = GetSavePath(item);
+            var path = GetLocalSavePath(item);
+
+            Logger.Debug("Saving xml metadata for {0} to {1}.", item.Path ?? item.Name, path);
 
             using (var memoryStream = new MemoryStream())
             {
@@ -193,30 +195,51 @@ namespace XmlMetadata
 
                 cancellationToken.ThrowIfCancellationRequested();
 
-                SaveToFile(memoryStream, path);
+                await SaveToFile(memoryStream, path, cancellationToken).ConfigureAwait(false);
             }
         }
 
-        private void SaveToFile(Stream stream, string path)
+        private async Task SaveToFile(Stream stream, string path, CancellationToken cancellationToken)
         {
             FileSystem.CreateDirectory(FileSystem.GetDirectoryName(path));
+            // On Windows, saving the file will fail if the file is hidden or readonly
+            FileSystem.SetAttributes(path, false, false);
 
-            var file = FileSystem.GetFileInfo(path);
+            var fileCreated = false;
 
-            // This will fail if the file is hidden
-            if (file.Exists)
+            try
             {
-                FileSystem.SetAttributes(path, false, false);
+                using (var filestream = FileSystem.GetFileStream(path, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read, FileOpenOptions.Asynchronous | FileOpenOptions.SequentialScan))
+                {
+                    fileCreated = true;
+                    await stream.CopyToAsync(filestream, StreamDefaults.DefaultCopyToBufferSize, cancellationToken).ConfigureAwait(false);
+                }
             }
-
-            using (var filestream = FileSystem.GetFileStream(path, FileOpenMode.Create, FileAccessMode.Write, FileShareMode.Read))
+            catch
             {
-                stream.CopyTo(filestream);
+                if (fileCreated)
+                {
+                    TryDelete(path);
+                }
+
+                throw;
             }
 
             if (ConfigurationManager.Configuration.SaveMetadataHidden)
             {
                 SetHidden(path, true);
+            }
+        }
+
+        private void TryDelete(string path)
+        {
+            try
+            {
+                FileSystem.DeleteFile(path);
+            }
+            catch
+            {
+
             }
         }
 

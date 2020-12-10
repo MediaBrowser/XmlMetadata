@@ -5,6 +5,7 @@ using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using MediaBrowser.Model.Logging;
+using MediaBrowser.Model.Configuration;
 
 namespace XmlMetadata.Providers
 {
@@ -15,7 +16,7 @@ namespace XmlMetadata.Providers
 
         protected ILogger Logger;
 
-        public Task<MetadataResult<T>> GetMetadata(ItemInfo info,
+        public Task<MetadataResult<T>> GetMetadata(ItemInfo info, LibraryOptions libraryOptions,
             IDirectoryService directoryService,
             CancellationToken cancellationToken)
         {
@@ -61,7 +62,7 @@ namespace XmlMetadata.Providers
 
         protected abstract FileSystemMetadata GetXmlFile(ItemInfo info, IDirectoryService directoryService);
 
-        public bool HasChanged(BaseItem item, IDirectoryService directoryService)
+        public bool HasChanged(BaseItem item, LibraryOptions libraryOptions, IDirectoryService directoryService)
         {
             var file = GetXmlFile(new ItemInfo(item), directoryService);
 

@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using MediaBrowser.Model.Configuration;
 
 namespace XmlMetadata.Images
 {
@@ -31,10 +32,10 @@ namespace XmlMetadata.Images
 
         public bool Supports(BaseItem item)
         {
-            return item is Episode && item.SupportsLocalMetadata;
+            return item is Episode && item.IsFileProtocol;
         }
 
-        public List<LocalImageInfo> GetImages(BaseItem item, IDirectoryService directoryService)
+        public List<LocalImageInfo> GetImages(BaseItem item, LibraryOptions libraryOptions, IDirectoryService directoryService)
         {
             var parentPath = _fileSystem.GetDirectoryName(item.Path);
 
