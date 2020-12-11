@@ -1,12 +1,13 @@
 ﻿using System.IO;
 using System.Threading;
 using MediaBrowser.Model.IO;
-using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.IO;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Logging;
 
 using XmlMetadata.Parsers;
+using System;
+using MediaBrowser.Controller.Entities;
 
 namespace XmlMetadata.Providers
 {
@@ -29,7 +30,14 @@ namespace XmlMetadata.Providers
 
         protected override FileSystemMetadata GetXmlFile(ItemInfo info, IDirectoryService directoryService)
         {
-            return directoryService.GetFile(Path.Combine(info.Path, "person.xml"));
+            var path = info.Path;
+
+            if (string.IsNullOrEmpty(path) || BaseItem.MediaSourceManager.GetPathProtocol(path.AsSpan()) != MediaBrowser.Model.MediaInfo.MediaProtocol.File)
+            {
+                return null;
+            }
+
+            return directoryService.GetFile(Path.Combine(path, "person.xml"));
         }
     }
 }

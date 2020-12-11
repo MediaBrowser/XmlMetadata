@@ -6,6 +6,8 @@ using MediaBrowser.Model.Logging;
 using System.IO;
 using System.Threading;
 using XmlMetadata.Parsers;
+using System;
+using MediaBrowser.Controller.Entities;
 
 namespace XmlMetadata.Providers
 {
@@ -33,13 +35,20 @@ namespace XmlMetadata.Providers
 
         public static FileSystemMetadata GetXmlFileInfo(ItemInfo info, IFileSystem fileSystem)
         {
-            var fileInfo = fileSystem.GetFileSystemInfo(info.Path);
+            var path = info.Path;
 
-            var directoryInfo = fileInfo.IsDirectory ? fileInfo : fileSystem.GetDirectoryInfo(fileSystem.GetDirectoryName(info.Path));
+            if (string.IsNullOrEmpty(path) || BaseItem.MediaSourceManager.GetPathProtocol(path.AsSpan()) != MediaBrowser.Model.MediaInfo.MediaProtocol.File)
+            {
+                return null;
+            }
+
+            var fileInfo = fileSystem.GetFileSystemInfo(path);
+
+            var directoryInfo = fileInfo.IsDirectory ? fileInfo : fileSystem.GetDirectoryInfo(fileSystem.GetDirectoryName(path));
 
             var directoryPath = directoryInfo.FullName;
 
-            var specificFile = Path.Combine(directoryPath, fileSystem.GetFileNameWithoutExtension(info.Path) + ".xml");
+            var specificFile = Path.Combine(directoryPath, fileSystem.GetFileNameWithoutExtension(path) + ".xml");
 
             var file = fileSystem.GetFileInfo(specificFile);
 
