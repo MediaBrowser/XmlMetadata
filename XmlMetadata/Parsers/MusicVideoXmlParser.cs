@@ -2,46 +2,41 @@
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
-
+using MediaBrowser.Controller.Entities.Audio;
 using System;
 using System.Xml;
+using System.Threading.Tasks;
 
 namespace XmlMetadata.Parsers
 {
     public class MusicVideoXmlParser : BaseVideoXmlParser<MusicVideo>
     {
-        /// <summary>
-        /// Fetches the data from XML node.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="result">The result.</param>
-        protected override void FetchDataFromXmlNode(XmlReader reader, MetadataResult<MusicVideo> result)
+        protected override async Task FetchDataFromXmlNode(XmlReader reader, MetadataResult<MusicVideo> item)
         {
-            var item = result.Item;
-
             switch (reader.Name)
             {
                 case "Artist":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
-                            item.Artists = val.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
+                            item.Item.SetArtists(val.Split(new char[] { ';' }, StringSplitOptions.RemoveEmptyEntries));
                         }
 
                         break;
                     }
 
                 case "Album":
-                    item.Album = reader.ReadElementContentAsString();
+                    item.Item.Album = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
                     break;
 
                 default:
-                    base.FetchDataFromXmlNode(reader, result);
+                    await base.FetchDataFromXmlNode(reader, item).ConfigureAwait(false);
                     break;
             }
         }
+
 
         public MusicVideoXmlParser(ILogger logger, IProviderManager providerManager, IFileSystem fileSystem) : base(logger, providerManager, fileSystem)
         {

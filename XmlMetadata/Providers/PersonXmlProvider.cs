@@ -8,6 +8,7 @@ using MediaBrowser.Model.Logging;
 using XmlMetadata.Parsers;
 using System;
 using MediaBrowser.Controller.Entities;
+using System.Threading.Tasks;
 
 namespace XmlMetadata.Providers
 {
@@ -23,9 +24,9 @@ namespace XmlMetadata.Providers
             
         }
 
-        protected override void Fetch(MetadataResult<Person> result, string path, CancellationToken cancellationToken)
+        protected override Task Fetch(MetadataResult<Person> result, string path, CancellationToken cancellationToken)
         {
-            new BaseItemXmlParser<Person>(Logger, _providerManager, FileSystem).Fetch(result, path, cancellationToken);
+            return new BaseItemXmlParser<Person>(Logger, _providerManager, FileSystem).Fetch(result, path, cancellationToken);
         }
 
         protected override FileSystemMetadata GetXmlFile(ItemInfo info, IDirectoryService directoryService)

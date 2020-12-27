@@ -1,11 +1,13 @@
 ﻿using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
-using MediaBrowser.Model.IO;
 using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
-using MediaBrowser.Model.Logging;
+
+using MediaBrowser.Controller.IO;
+using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Configuration;
+using MediaBrowser.Model.Logging;
 
 namespace XmlMetadata.Providers
 {
@@ -16,7 +18,8 @@ namespace XmlMetadata.Providers
 
         protected ILogger Logger;
 
-        public Task<MetadataResult<T>> GetMetadata(ItemInfo info, LibraryOptions libraryOptions,
+        public async Task<MetadataResult<T>> GetMetadata(ItemInfo info,
+            LibraryOptions libraryOptions,
             IDirectoryService directoryService,
             CancellationToken cancellationToken)
         {
@@ -26,7 +29,7 @@ namespace XmlMetadata.Providers
 
             if (file == null)
             {
-                return Task.FromResult(result);
+                return result;
             }
 
             var path = file.FullName;
@@ -37,22 +40,22 @@ namespace XmlMetadata.Providers
             {
                 result.Item = new T();
 
-                Fetch(result, path, cancellationToken);
+                await Fetch(result, path, cancellationToken).ConfigureAwait(false);
                 result.HasMetadata = true;
             }
-            catch (FileNotFoundException e)
+            catch (FileNotFoundException)
             {
                 result.HasMetadata = false;
             }
-            catch (IOException e)
+            catch (IOException)
             {
                 result.HasMetadata = false;
             }
 
-            return Task.FromResult(result);
+            return result;
         }
 
-        protected abstract void Fetch(MetadataResult<T> result, string path, CancellationToken cancellationToken);
+        protected abstract Task Fetch(MetadataResult<T> result, string path, CancellationToken cancellationToken);
 
         protected BaseXmlProvider(IFileSystem fileSystem, ILogger logger)
         {
@@ -82,7 +85,7 @@ namespace XmlMetadata.Providers
             }
         }
 
-        public  virtual int Order
+        public virtual int Order
         {
             get
             {

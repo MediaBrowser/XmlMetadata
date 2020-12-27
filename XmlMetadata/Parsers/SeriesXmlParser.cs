@@ -6,6 +6,7 @@ using MediaBrowser.Model.Logging;
 
 using System;
 using System.Xml;
+using System.Threading.Tasks;
 
 namespace XmlMetadata.Parsers
 {
@@ -14,29 +15,22 @@ namespace XmlMetadata.Parsers
     /// </summary>
     public class SeriesXmlParser : BaseItemXmlParser<Series>
     {
-        /// <summary>
-        /// Fetches the data from XML node.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="result">The result.</param>
-        protected override void FetchDataFromXmlNode(XmlReader reader, MetadataResult<Series> result)
+        protected override async Task FetchDataFromXmlNode(XmlReader reader, MetadataResult<Series> item)
         {
-            var item = result.Item;
-
             switch (reader.Name)
             {
                 case "Series":
                     //MB generated metadata is within a "Series" node
                     using (var subTree = reader.ReadSubtree())
                     {
-                        subTree.MoveToContent();
+                        await subTree.MoveToContentAsync().ConfigureAwait(false);
 
                         // Loop through each element
                         while (subTree.Read())
                         {
                             if (subTree.NodeType == XmlNodeType.Element)
                             {
-                                FetchDataFromXmlNode(subTree, result);
+                                await FetchDataFromXmlNode(subTree, item).ConfigureAwait(false);
                             }
                         }
 
@@ -44,35 +38,35 @@ namespace XmlMetadata.Parsers
                     break;
 
                 case "id":
-                    string id = reader.ReadElementContentAsString();
+                    string id = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
                     if (!string.IsNullOrWhiteSpace(id))
                     {
-                        item.SetProviderId(MetadataProviders.Tvdb, id);
+                        item.Item.SetProviderId(MetadataProviders.Tvdb, id);
                     }
                     break;
 
                 case "DisplayOrder":
 
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (Enum.TryParse(val, true, out SeriesDisplayOrder seriesDisplayOrder))
                         {
-                            item.DisplayOrder = seriesDisplayOrder;
+                            item.Item.DisplayOrder = seriesDisplayOrder;
                         }
                     }
                     break;
 
                 case "Status":
                     {
-                        var status = reader.ReadElementContentAsString();
+                        var status = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(status))
                         {
                             SeriesStatus seriesStatus;
                             if (Enum.TryParse(status, true, out seriesStatus))
                             {
-                                item.Status = seriesStatus;
+                                item.Item.Status = seriesStatus;
                             }
                             else
                             {
@@ -84,7 +78,7 @@ namespace XmlMetadata.Parsers
                     }
 
                 default:
-                    base.FetchDataFromXmlNode(reader, result);
+                    await base.FetchDataFromXmlNode(reader, item).ConfigureAwait(false);
                     break;
             }
         }

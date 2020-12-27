@@ -27,8 +27,6 @@ namespace XmlMetadata
 {
     public abstract class BaseXmlSaver : IMetadataSaver
     {
-        private static readonly CultureInfo UsCulture = new CultureInfo("en-US");
-
         private static readonly Dictionary<string, string> CommonTags = new[] {
 
                     "Added",
@@ -334,7 +332,7 @@ namespace XmlMetadata
 
             if (item.CriticRating.HasValue)
             {
-                writer.WriteElementString("CriticRating", item.CriticRating.Value.ToString(UsCulture));
+                writer.WriteElementString("CriticRating", item.CriticRating.Value.ToString(CultureInfo.InvariantCulture));
             }
 
             if (!string.IsNullOrEmpty(item.Overview))
@@ -392,7 +390,7 @@ namespace XmlMetadata
 
                 foreach (var trailer in item.RemoteTrailers)
                 {
-                    writer.WriteElementString("Trailer", trailer.Url);
+                    writer.WriteElementString("Trailer", trailer);
                 }
 
                 writer.WriteEndElement();
@@ -412,12 +410,12 @@ namespace XmlMetadata
 
             if (item.CommunityRating.HasValue)
             {
-                writer.WriteElementString("Rating", item.CommunityRating.Value.ToString(UsCulture));
+                writer.WriteElementString("Rating", item.CommunityRating.Value.ToString(CultureInfo.InvariantCulture));
             }
 
             if (item.ProductionYear.HasValue && !(item is Person))
             {
-                writer.WriteElementString("ProductionYear", item.ProductionYear.Value.ToString(UsCulture));
+                writer.WriteElementString("ProductionYear", item.ProductionYear.Value.ToString(CultureInfo.InvariantCulture));
             }
 
             //if (!string.IsNullOrEmpty(item.HomePageUrl))
@@ -441,7 +439,7 @@ namespace XmlMetadata
             {
                 var timespan = TimeSpan.FromTicks(runTimeTicks.Value);
 
-                writer.WriteElementString("RunningTime", Convert.ToInt32(timespan.TotalMinutes).ToString(UsCulture));
+                writer.WriteElementString("RunningTime", Convert.ToInt32(timespan.TotalMinutes).ToString(CultureInfo.InvariantCulture));
             }
 
             if (item.ProviderIds != null)
@@ -469,7 +467,7 @@ namespace XmlMetadata
 
                 foreach (var genre in item.Genres)
                 {
-                    writer.WriteElementString("Genre", genre);
+                    writer.WriteElementString("Genre", genre.Name);
                 }
 
                 writer.WriteEndElement();
@@ -481,7 +479,7 @@ namespace XmlMetadata
 
                 foreach (var studio in item.Studios)
                 {
-                    writer.WriteElementString("Studio", studio);
+                    writer.WriteElementString("Studio", studio.Name);
                 }
 
                 writer.WriteEndElement();
@@ -493,7 +491,7 @@ namespace XmlMetadata
 
                 foreach (var tag in item.Tags)
                 {
-                    writer.WriteElementString("Tag", tag);
+                    writer.WriteElementString("Tag", tag.Name);
                 }
 
                 writer.WriteEndElement();

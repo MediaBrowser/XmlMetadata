@@ -6,13 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Xml;
-using MediaBrowser.Controller;
 using MediaBrowser.Controller.Entities;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.Entities;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
-
+using System.Threading.Tasks;
 
 namespace XmlMetadata.Parsers
 {
@@ -31,7 +30,6 @@ namespace XmlMetadata.Parsers
 
         private Dictionary<string, string> _validProviderIds;
 
-        
         protected IFileSystem FileSystem { get; private set; }
 
         /// <summary>
@@ -42,7 +40,6 @@ namespace XmlMetadata.Parsers
         {
             Logger = logger;
             ProviderManager = providerManager;
-            
             FileSystem = fileSystem;
         }
 
@@ -65,7 +62,7 @@ namespace XmlMetadata.Parsers
         /// <param name="metadataFile">The metadata file.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
         /// <exception cref="System.ArgumentNullException"></exception>
-        public void Fetch(MetadataResult<T> item, string metadataFile, CancellationToken cancellationToken)
+        public Task Fetch(MetadataResult<T> item, string metadataFile, CancellationToken cancellationToken)
         {
             if (item == null)
             {
@@ -82,6 +79,7 @@ namespace XmlMetadata.Parsers
             settings.CheckCharacters = false;
             settings.IgnoreProcessingInstructions = true;
             settings.IgnoreComments = true;
+            settings.Async = true;
 
             _validProviderIds = _validProviderIds = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
@@ -100,7 +98,7 @@ namespace XmlMetadata.Parsers
             _validProviderIds.Add("IMDB", "Imdb");
 
             //Fetch(item, metadataFile, settings, Encoding.GetEncoding("ISO-8859-1"), cancellationToken);
-            Fetch(item, metadataFile, settings, Encoding.UTF8, cancellationToken);
+            return Fetch(item, metadataFile, settings, Encoding.UTF8, cancellationToken);
         }
 
         /// <summary>
@@ -111,19 +109,19 @@ namespace XmlMetadata.Parsers
         /// <param name="settings">The settings.</param>
         /// <param name="encoding">The encoding.</param>
         /// <param name="cancellationToken">The cancellation token.</param>
-        private void Fetch(MetadataResult<T> item, string metadataFile, XmlReaderSettings settings, Encoding encoding, CancellationToken cancellationToken)
+        private async Task Fetch(MetadataResult<T> item, string metadataFile, XmlReaderSettings settings, Encoding encoding, CancellationToken cancellationToken)
         {
             item.ResetPeople();
 
-            using (Stream fileStream = FileSystem.OpenRead(metadataFile))
+            using (Stream fileStream = FileSystem.GetFileStream(metadataFile, FileOpenMode.Open, FileAccessMode.Read, FileShareMode.Read, FileOpenOptions.SequentialScan | FileOpenOptions.Asynchronous))
             {
                 using (var streamReader = new StreamReader(fileStream, encoding))
                 {
                     // Use XmlReader for best performance
                     using (var reader = XmlReader.Create(streamReader, settings))
                     {
-                        reader.MoveToContent();
-                        reader.Read();
+                        await reader.MoveToContentAsync().ConfigureAwait(false);
+                        await reader.ReadAsync().ConfigureAwait(false);
 
                         // Loop through each element
                         while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -132,11 +130,11 @@ namespace XmlMetadata.Parsers
 
                             if (reader.NodeType == XmlNodeType.Element)
                             {
-                                FetchDataFromXmlNode(reader, item);
+                                await FetchDataFromXmlNode(reader, item).ConfigureAwait(false);
                             }
                             else
                             {
-                                reader.Read();
+                                await reader.ReadAsync().ConfigureAwait(false);
                             }
                         }
                     }
@@ -144,14 +142,12 @@ namespace XmlMetadata.Parsers
             }
         }
 
-        private readonly CultureInfo _usCulture = new CultureInfo("en-US");
-
         /// <summary>
         /// Fetches metadata from one Xml Element
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <param name="itemResult">The item result.</param>
-        protected virtual void FetchDataFromXmlNode(XmlReader reader, MetadataResult<T> itemResult)
+        protected virtual async Task FetchDataFromXmlNode(XmlReader reader, MetadataResult<T> itemResult)
         {
             var item = itemResult.Item;
 
@@ -160,12 +156,12 @@ namespace XmlMetadata.Parsers
                 // DateCreated
                 case "Added":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
-                            DateTime added;
-                            if (DateTime.TryParse(val, out added))
+                            DateTimeOffset added;
+                            if (DateTimeOffset.TryParse(val, out added))
                             {
                                 item.DateCreated = added.ToUniversalTime();
                             }
@@ -179,7 +175,7 @@ namespace XmlMetadata.Parsers
 
                 case "OriginalTitle":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrEmpty(val))
                         {
@@ -189,17 +185,17 @@ namespace XmlMetadata.Parsers
                     }
 
                 case "LocalTitle":
-                    item.Name = reader.ReadElementContentAsString();
+                    item.Name = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
                     break;
 
                 case "CriticRating":
                     {
-                        var text = reader.ReadElementContentAsString();
+                        var text = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrEmpty(text))
                         {
                             float value;
-                            if (float.TryParse(text, NumberStyles.Any, _usCulture, out value))
+                            if (float.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out value))
                             {
                                 item.CriticRating = value;
                             }
@@ -210,7 +206,7 @@ namespace XmlMetadata.Parsers
 
                 case "SortTitle":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
@@ -222,7 +218,7 @@ namespace XmlMetadata.Parsers
                 case "Overview":
                 case "Description":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
@@ -234,7 +230,7 @@ namespace XmlMetadata.Parsers
 
                 case "Language":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         item.PreferredMetadataLanguage = val;
 
@@ -243,7 +239,7 @@ namespace XmlMetadata.Parsers
 
                 case "CountryCode":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         item.PreferredMetadataCountryCode = val;
 
@@ -252,7 +248,7 @@ namespace XmlMetadata.Parsers
 
                 case "PlaceOfBirth":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
@@ -268,7 +264,7 @@ namespace XmlMetadata.Parsers
 
                 case "LockedFields":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
@@ -289,19 +285,18 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-                 case "TagLines":
-                case "Taglines":
+                case "TagLines":
                     {
                         if (!reader.IsEmptyElement)
                         {
                             using (var subtree = reader.ReadSubtree())
                             {
-                                FetchFromTaglinesNode(subtree, item);
+                                await FetchFromTaglinesNode(subtree, item).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            reader.Read();
+                            await reader.ReadAsync().ConfigureAwait(false);
                         }
                         break;
                     }
@@ -312,12 +307,12 @@ namespace XmlMetadata.Parsers
                         {
                             using (var subtree = reader.ReadSubtree())
                             {
-                                FetchFromCountriesNode(subtree, item);
+                                await FetchFromCountriesNode(subtree, item).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            reader.Read();
+                            await reader.ReadAsync().ConfigureAwait(false);
                         }
                         break;
                     }
@@ -325,7 +320,7 @@ namespace XmlMetadata.Parsers
                 case "ContentRating":
                 case "MPAARating":
                     {
-                        var rating = reader.ReadElementContentAsString();
+                        var rating = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(rating))
                         {
@@ -336,7 +331,7 @@ namespace XmlMetadata.Parsers
 
                 case "CustomRating":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
@@ -347,12 +342,11 @@ namespace XmlMetadata.Parsers
 
                 case "RunningTime":
                     {
-                        var text = reader.ReadElementContentAsString();
+                        var text = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(text))
                         {
-                            int runtime;
-                            if (int.TryParse(text.Split(' ')[0], NumberStyles.Integer, _usCulture, out runtime))
+                            if (int.TryParse(text.Split(' ')[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out int runtime))
                             {
                                 item.RunTimeTicks = TimeSpan.FromMinutes(runtime).Ticks;
                             }
@@ -362,7 +356,7 @@ namespace XmlMetadata.Parsers
 
                 case "LockData":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
@@ -373,7 +367,7 @@ namespace XmlMetadata.Parsers
 
                 case "Network":
                     {
-                        foreach (var name in SplitNames(reader.ReadElementContentAsString()))
+                        foreach (var name in SplitNames(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false)))
                         {
                             if (string.IsNullOrWhiteSpace(name))
                             {
@@ -386,7 +380,7 @@ namespace XmlMetadata.Parsers
 
                 case "Director":
                     {
-                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.Director }))
+                        foreach (var p in SplitNames(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false)).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.Director }))
                         {
                             if (string.IsNullOrWhiteSpace(p.Name))
                             {
@@ -398,7 +392,7 @@ namespace XmlMetadata.Parsers
                     }
                 case "Writer":
                     {
-                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.Writer }))
+                        foreach (var p in SplitNames(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false)).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.Writer }))
                         {
                             if (string.IsNullOrWhiteSpace(p.Name))
                             {
@@ -418,7 +412,13 @@ namespace XmlMetadata.Parsers
                         {
                             // This is one of the mis-named "Actors" full nodes created by MB2
                             // Create a reader and pass it to the persons node processor
-                            FetchDataFromPersonsNode(XmlReader.Create(new StringReader("<Persons>" + actors + "</Persons>")), itemResult);
+                            using (var stringReader = new StringReader("<Persons>" + actors + "</Persons>"))
+                            {
+                                using (var xmlReader = XmlReader.Create(stringReader, new XmlReaderSettings { Async = true }))
+                                {
+                                    await FetchDataFromPersonsNode(xmlReader, itemResult).ConfigureAwait(false);
+                                }
+                            }
                         }
                         else
                         {
@@ -437,7 +437,7 @@ namespace XmlMetadata.Parsers
 
                 case "GuestStars":
                     {
-                        foreach (var p in SplitNames(reader.ReadElementContentAsString()).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.GuestStar }))
+                        foreach (var p in SplitNames(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false)).Select(v => new PersonInfo { Name = v.Trim(), Type = PersonType.GuestStar }))
                         {
                             if (string.IsNullOrWhiteSpace(p.Name))
                             {
@@ -450,7 +450,7 @@ namespace XmlMetadata.Parsers
 
                 case "Trailer":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
@@ -465,19 +465,19 @@ namespace XmlMetadata.Parsers
                         {
                             using (var subtree = reader.ReadSubtree())
                             {
-                                FetchDataFromTrailersNode(subtree, item);
+                                await FetchDataFromTrailersNode(subtree, item).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            reader.Read();
+                            await reader.ReadAsync().ConfigureAwait(false);
                         }
                         break;
                     }
 
                 case "ProductionYear":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
@@ -495,7 +495,7 @@ namespace XmlMetadata.Parsers
                 case "IMDBrating":
                     {
 
-                        var rating = reader.ReadElementContentAsString();
+                        var rating = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(rating))
                         {
@@ -513,7 +513,7 @@ namespace XmlMetadata.Parsers
                 case "PremiereDate":
                 case "FirstAired":
                     {
-                        var firstAired = reader.ReadElementContentAsString();
+                        var firstAired = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(firstAired))
                         {
@@ -532,7 +532,7 @@ namespace XmlMetadata.Parsers
                 case "DeathDate":
                 case "EndDate":
                     {
-                        var firstAired = reader.ReadElementContentAsString();
+                        var firstAired = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(firstAired))
                         {
@@ -547,26 +547,18 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-                case "CollectionNumber":
-                    var tmdbCollection = reader.ReadElementContentAsString();
-                    if (!string.IsNullOrWhiteSpace(tmdbCollection))
-                    {
-                        item.SetProviderId(MetadataProviders.TmdbCollection, tmdbCollection);
-                    }
-                    break;
-
                 case "Genres":
                     {
                         if (!reader.IsEmptyElement)
                         {
                             using (var subtree = reader.ReadSubtree())
                             {
-                                FetchFromGenresNode(subtree, item);
+                                await FetchFromGenresNode(subtree, item).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            reader.Read();
+                            await reader.ReadAsync().ConfigureAwait(false);
                         }
                         break;
                     }
@@ -577,12 +569,12 @@ namespace XmlMetadata.Parsers
                         {
                             using (var subtree = reader.ReadSubtree())
                             {
-                                FetchFromTagsNode(subtree, item);
+                                await FetchFromTagsNode(subtree, item).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            reader.Read();
+                            await reader.ReadAsync().ConfigureAwait(false);
                         }
                         break;
                     }
@@ -593,12 +585,12 @@ namespace XmlMetadata.Parsers
                         {
                             using (var subtree = reader.ReadSubtree())
                             {
-                                FetchDataFromPersonsNode(subtree, itemResult);
+                                await FetchDataFromPersonsNode(subtree, itemResult).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            reader.Read();
+                            await reader.ReadAsync().ConfigureAwait(false);
                         }
                         break;
                     }
@@ -609,12 +601,12 @@ namespace XmlMetadata.Parsers
                         {
                             using (var subtree = reader.ReadSubtree())
                             {
-                                FetchFromStudiosNode(subtree, item);
+                                await FetchFromStudiosNode(subtree, item).ConfigureAwait(false);
                             }
                         }
                         else
                         {
-                            reader.Read();
+                            await reader.ReadAsync().ConfigureAwait(false);
                         }
                         break;
                     }
@@ -628,20 +620,20 @@ namespace XmlMetadata.Parsers
                                 var hasShares = item as IHasShares;
                                 if (hasShares != null)
                                 {
-                                    FetchFromSharesNode(subtree, hasShares);
+                                    await FetchFromSharesNode(subtree, hasShares).ConfigureAwait(false);
                                 }
                             }
                         }
                         else
                         {
-                            reader.Read();
+                            await reader.ReadAsync().ConfigureAwait(false);
                         }
                         break;
                     }
 
                 case "Format3D":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         var video = item as Video;
 
@@ -677,7 +669,7 @@ namespace XmlMetadata.Parsers
                         string providerIdValue;
                         if (_validProviderIds.TryGetValue(readerName, out providerIdValue))
                         {
-                            var id = reader.ReadElementContentAsString();
+                            var id = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
                             if (!string.IsNullOrWhiteSpace(id))
                             {
                                 item.SetProviderId(providerIdValue, id);
@@ -685,20 +677,20 @@ namespace XmlMetadata.Parsers
                         }
                         else
                         {
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                         }
 
                         break;
-
                     }
             }
         }
-        private void FetchFromSharesNode(XmlReader reader, IHasShares item)
+
+        private async Task FetchFromSharesNode(XmlReader reader, IHasShares item)
         {
             var list = new List<Share>();
 
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -711,13 +703,13 @@ namespace XmlMetadata.Parsers
                             {
                                 if (reader.IsEmptyElement)
                                 {
-                                    reader.Read();
+                                    await reader.ReadAsync().ConfigureAwait(false);
                                     continue;
                                 }
 
                                 using (var subReader = reader.ReadSubtree())
                                 {
-                                    var child = GetShare(subReader);
+                                    var child = await GetShare(subReader).ConfigureAwait(false);
 
                                     if (child != null)
                                     {
@@ -729,26 +721,26 @@ namespace XmlMetadata.Parsers
                             }
                         default:
                             {
-                                reader.Skip();
+                                await reader.SkipAsync().ConfigureAwait(false);
                                 break;
                             }
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
 
             item.Shares = list.ToArray();
         }
 
-        private Share GetShareFromNode(XmlReader reader)
+        private async Task<Share> GetShareFromNode(XmlReader reader)
         {
             var share = new Share();
 
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -759,34 +751,34 @@ namespace XmlMetadata.Parsers
                     {
                         case "UserId":
                             {
-                                share.UserId = reader.ReadElementContentAsString();
+                                share.UserId = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             }
 
                         case "CanEdit":
                             {
-                                share.CanEdit = string.Equals(reader.ReadElementContentAsString(), true.ToString(), StringComparison.OrdinalIgnoreCase);
+                                share.CanEdit = string.Equals(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false), "true", StringComparison.OrdinalIgnoreCase);
                                 break;
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
 
             return share;
         }
 
-        private void FetchFromCountriesNode(XmlReader reader, T item)
+        private async Task FetchFromCountriesNode(XmlReader reader, T item)
         {
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -797,7 +789,7 @@ namespace XmlMetadata.Parsers
                     {
                         case "Country":
                             {
-                                var val = reader.ReadElementContentAsString();
+                                var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(val))
                                 {
@@ -806,13 +798,13 @@ namespace XmlMetadata.Parsers
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
         }
@@ -822,10 +814,10 @@ namespace XmlMetadata.Parsers
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <param name="item">The item.</param>
-        private void FetchFromTaglinesNode(XmlReader reader, T item)
+        private async Task FetchFromTaglinesNode(XmlReader reader, T item)
         {
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -834,10 +826,9 @@ namespace XmlMetadata.Parsers
                 {
                     switch (reader.Name)
                     {
-                         case "Tagline":
-                        case "TagLine":
+                        case "Tagline":
                             {
-                                var val = reader.ReadElementContentAsString();
+                                var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(val))
                                 {
@@ -846,13 +837,13 @@ namespace XmlMetadata.Parsers
                                 break;
                             }
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
         }
@@ -862,10 +853,10 @@ namespace XmlMetadata.Parsers
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <param name="item">The item.</param>
-        private void FetchFromGenresNode(XmlReader reader, T item)
+        private async Task FetchFromGenresNode(XmlReader reader, T item)
         {
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -876,7 +867,7 @@ namespace XmlMetadata.Parsers
                     {
                         case "Genre":
                             {
-                                var genre = reader.ReadElementContentAsString();
+                                var genre = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(genre))
                                 {
@@ -886,21 +877,21 @@ namespace XmlMetadata.Parsers
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
         }
 
-        private void FetchFromTagsNode(XmlReader reader, BaseItem item)
+        private async Task FetchFromTagsNode(XmlReader reader, BaseItem item)
         {
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             var tags = new List<string>();
 
@@ -913,7 +904,7 @@ namespace XmlMetadata.Parsers
                     {
                         case "Tag":
                             {
-                                var tag = reader.ReadElementContentAsString();
+                                var tag = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(tag))
                                 {
@@ -923,17 +914,17 @@ namespace XmlMetadata.Parsers
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
 
-            item.Tags = tags.Distinct(StringComparer.Ordinal).ToArray();
+            item.SetTags(tags);
         }
 
         /// <summary>
@@ -941,10 +932,10 @@ namespace XmlMetadata.Parsers
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <param name="item">The item.</param>
-        private void FetchDataFromPersonsNode(XmlReader reader, MetadataResult<T> item)
+        private async Task FetchDataFromPersonsNode(XmlReader reader, MetadataResult<T> item)
         {
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -958,12 +949,12 @@ namespace XmlMetadata.Parsers
                             {
                                 if (reader.IsEmptyElement)
                                 {
-                                    reader.Read();
+                                    await reader.ReadAsync().ConfigureAwait(false);
                                     continue;
                                 }
                                 using (var subtree = reader.ReadSubtree())
                                 {
-                                    foreach (var person in GetPersonsFromXmlNode(subtree))
+                                    foreach (var person in await GetPersonsFromXmlNode(subtree).ConfigureAwait(false))
                                     {
                                         if (string.IsNullOrWhiteSpace(person.Name))
                                         {
@@ -976,21 +967,21 @@ namespace XmlMetadata.Parsers
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
         }
 
-        private void FetchDataFromTrailersNode(XmlReader reader, T item)
+        private async Task FetchDataFromTrailersNode(XmlReader reader, T item)
         {
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -1001,7 +992,7 @@ namespace XmlMetadata.Parsers
                     {
                         case "Trailer":
                             {
-                                var val = reader.ReadElementContentAsString();
+                                var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(val))
                                 {
@@ -1011,13 +1002,13 @@ namespace XmlMetadata.Parsers
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
         }
@@ -1027,10 +1018,10 @@ namespace XmlMetadata.Parsers
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <param name="item">The item.</param>
-        private void FetchFromStudiosNode(XmlReader reader, T item)
+        private async Task FetchFromStudiosNode(XmlReader reader, T item)
         {
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -1041,7 +1032,7 @@ namespace XmlMetadata.Parsers
                     {
                         case "Studio":
                             {
-                                var studio = reader.ReadElementContentAsString();
+                                var studio = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(studio))
                                 {
@@ -1051,13 +1042,13 @@ namespace XmlMetadata.Parsers
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
         }
@@ -1067,15 +1058,15 @@ namespace XmlMetadata.Parsers
         /// </summary>
         /// <param name="reader">The reader.</param>
         /// <returns>IEnumerable{PersonInfo}.</returns>
-        private IEnumerable<PersonInfo> GetPersonsFromXmlNode(XmlReader reader)
+        private async Task<PersonInfo[]> GetPersonsFromXmlNode(XmlReader reader)
         {
             var name = string.Empty;
             var type = PersonType.Actor;  // If type is not specified assume actor
             var role = string.Empty;
             int? sortOrder = null;
 
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -1085,12 +1076,12 @@ namespace XmlMetadata.Parsers
                     switch (reader.Name)
                     {
                         case "Name":
-                            name = reader.ReadElementContentAsString() ?? string.Empty;
+                            name = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false) ?? string.Empty;
                             break;
 
                         case "Type":
                             {
-                                var val = reader.ReadElementContentAsString();
+                                var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(val))
                                 {
@@ -1105,7 +1096,7 @@ namespace XmlMetadata.Parsers
 
                         case "Role":
                             {
-                                var val = reader.ReadElementContentAsString();
+                                var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(val))
                                 {
@@ -1115,12 +1106,12 @@ namespace XmlMetadata.Parsers
                             }
                         case "SortOrder":
                             {
-                                var val = reader.ReadElementContentAsString();
+                                var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                                 if (!string.IsNullOrWhiteSpace(val))
                                 {
                                     int intVal;
-                                    if (int.TryParse(val, NumberStyles.Integer, _usCulture, out intVal))
+                                    if (int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out intVal))
                                     {
                                         sortOrder = intVal;
                                     }
@@ -1129,13 +1120,13 @@ namespace XmlMetadata.Parsers
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
 
@@ -1149,12 +1140,12 @@ namespace XmlMetadata.Parsers
             return new[] { personInfo };
         }
 
-        protected LinkedChild GetLinkedChild(XmlReader reader)
+        protected async Task<LinkedChild> GetLinkedChild(XmlReader reader)
         {
             var linkedItem = new LinkedChild();
 
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -1165,12 +1156,12 @@ namespace XmlMetadata.Parsers
                     {
                         case "Path":
                             {
-                                linkedItem.Path = reader.ReadElementContentAsString();
+                                linkedItem.Path = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             }
                         case "ItemId":
                             {
-                                var libraryItemId = reader.ReadElementContentAsString();
+                                var libraryItemId = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
                                 if (!string.IsNullOrEmpty(libraryItemId))
                                 {
                                     linkedItem.LibraryItemId = new Guid(libraryItemId);
@@ -1179,13 +1170,13 @@ namespace XmlMetadata.Parsers
                             }
 
                         default:
-                            reader.Skip();
+                            await reader.SkipAsync().ConfigureAwait(false);
                             break;
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
 
@@ -1198,12 +1189,12 @@ namespace XmlMetadata.Parsers
             return null;
         }
 
-        protected Share GetShare(XmlReader reader)
+        protected async Task<Share> GetShare(XmlReader reader)
         {
             var item = new Share();
 
-            reader.MoveToContent();
-            reader.Read();
+            await reader.MoveToContentAsync().ConfigureAwait(false);
+            await reader.ReadAsync().ConfigureAwait(false);
 
             // Loop through each element
             while (!reader.EOF && reader.ReadState == ReadState.Interactive)
@@ -1214,25 +1205,25 @@ namespace XmlMetadata.Parsers
                     {
                         case "UserId":
                             {
-                                item.UserId = reader.ReadElementContentAsString();
+                                item.UserId = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
                                 break;
                             }
 
                         case "CanEdit":
                             {
-                                item.CanEdit = string.Equals(reader.ReadElementContentAsString(), "true", StringComparison.OrdinalIgnoreCase);
+                                item.CanEdit = string.Equals(await reader.ReadElementContentAsStringAsync().ConfigureAwait(false), "true", StringComparison.OrdinalIgnoreCase);
                                 break;
                             }
                         default:
                             {
-                                reader.Skip();
+                                await reader.SkipAsync().ConfigureAwait(false);
                                 break;
                             }
                     }
                 }
                 else
                 {
-                    reader.Read();
+                    await reader.ReadAsync().ConfigureAwait(false);
                 }
             }
 

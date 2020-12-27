@@ -5,6 +5,7 @@ using MediaBrowser.Model.Logging;
 
 using System.Threading;
 using XmlMetadata.Parsers;
+using System.Threading.Tasks;
 
 namespace XmlMetadata.Providers
 {
@@ -20,9 +21,9 @@ namespace XmlMetadata.Providers
             
         }
 
-        protected override void Fetch(MetadataResult<Video> result, string path, CancellationToken cancellationToken)
+        protected override Task Fetch(MetadataResult<Video> result, string path, CancellationToken cancellationToken)
         {
-            new VideoXmlParser(Logger, _providerManager, FileSystem).Fetch(result, path, cancellationToken);
+            return new VideoXmlParser(Logger, _providerManager, FileSystem).Fetch(result, path, cancellationToken);
         }
 
         protected override FileSystemMetadata GetXmlFile(ItemInfo info, IDirectoryService directoryService)

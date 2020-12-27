@@ -10,6 +10,7 @@ using System.Globalization;
 using System.IO;
 using System.Threading;
 using System.Xml;
+using System.Threading.Tasks;
 
 namespace XmlMetadata.Parsers
 {
@@ -29,25 +30,18 @@ namespace XmlMetadata.Parsers
 
         private string _xmlPath;
 
-        public void Fetch(MetadataResult<Episode> item, 
+        public Task Fetch(MetadataResult<Episode> item,
             List<LocalImageInfo> images,
-            string metadataFile, 
+            string metadataFile,
             CancellationToken cancellationToken)
         {
             _imagesFound = images;
             _xmlPath = metadataFile;
 
-            Fetch(item, metadataFile, cancellationToken);
+            return Fetch(item, metadataFile, cancellationToken);
         }
 
-        private static readonly CultureInfo UsCulture = new CultureInfo("en-US");
-
-        /// <summary>
-        /// Fetches the data from XML node.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="result">The result.</param>
-        protected override void FetchDataFromXmlNode(XmlReader reader, MetadataResult<Episode> result)
+        protected override async Task FetchDataFromXmlNode(XmlReader reader, MetadataResult<Episode> result)
         {
             var item = result.Item;
 
@@ -58,14 +52,14 @@ namespace XmlMetadata.Parsers
                     //MB generated metadata is within an "Episode" node
                     using (var subTree = reader.ReadSubtree())
                     {
-                        subTree.MoveToContent();
+                        await subTree.MoveToContentAsync().ConfigureAwait(false);
 
                         // Loop through each element
                         while (subTree.Read())
                         {
                             if (subTree.NodeType == XmlNodeType.Element)
                             {
-                                FetchDataFromXmlNode(subTree, result);
+                                await FetchDataFromXmlNode(subTree, result).ConfigureAwait(false);
                             }
                         }
 
@@ -74,7 +68,7 @@ namespace XmlMetadata.Parsers
 
                 case "filename":
                     {
-                        var filename = reader.ReadElementContentAsString();
+                        var filename = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(filename))
                         {
@@ -99,7 +93,7 @@ namespace XmlMetadata.Parsers
                     }
                 case "SeasonNumber":
                     {
-                        var number = reader.ReadElementContentAsString();
+                        var number = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(number))
                         {
@@ -115,7 +109,7 @@ namespace XmlMetadata.Parsers
 
                 case "EpisodeNumber":
                     {
-                        var number = reader.ReadElementContentAsString();
+                        var number = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(number))
                         {
@@ -131,7 +125,7 @@ namespace XmlMetadata.Parsers
 
                 case "EpisodeNumberEnd":
                     {
-                        var number = reader.ReadElementContentAsString();
+                        var number = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(number))
                         {
@@ -147,14 +141,14 @@ namespace XmlMetadata.Parsers
 
                 case "airsbefore_episode":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
                             int rval;
 
                             // int.TryParse is local aware, so it can be probamatic, force us culture
-                            if (int.TryParse(val, NumberStyles.Integer, UsCulture, out rval))
+                            if (int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out rval))
                             {
                                 item.AirsBeforeEpisodeNumber = rval;
                             }
@@ -165,14 +159,14 @@ namespace XmlMetadata.Parsers
 
                 case "airsafter_season":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
                             int rval;
 
                             // int.TryParse is local aware, so it can be probamatic, force us culture
-                            if (int.TryParse(val, NumberStyles.Integer, UsCulture, out rval))
+                            if (int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out rval))
                             {
                                 item.AirsAfterSeasonNumber = rval;
                             }
@@ -183,14 +177,14 @@ namespace XmlMetadata.Parsers
 
                 case "airsbefore_season":
                     {
-                        var val = reader.ReadElementContentAsString();
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(val))
                         {
                             int rval;
 
                             // int.TryParse is local aware, so it can be probamatic, force us culture
-                            if (int.TryParse(val, NumberStyles.Integer, UsCulture, out rval))
+                            if (int.TryParse(val, NumberStyles.Integer, CultureInfo.InvariantCulture, out rval))
                             {
                                 item.AirsBeforeSeasonNumber = rval;
                             }
@@ -201,7 +195,7 @@ namespace XmlMetadata.Parsers
 
                 case "EpisodeName":
                     {
-                        var name = reader.ReadElementContentAsString();
+                        var name = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
                         if (!string.IsNullOrWhiteSpace(name))
                         {
@@ -210,9 +204,8 @@ namespace XmlMetadata.Parsers
                         break;
                     }
 
-
                 default:
-                    base.FetchDataFromXmlNode(reader, result);
+                    await base.FetchDataFromXmlNode(reader, result).ConfigureAwait(false);
                     break;
             }
         }

@@ -1,0 +1,51 @@
+﻿using MediaBrowser.Controller.Entities;
+using MediaBrowser.Controller.Providers;
+using MediaBrowser.Model.Entities;
+using MediaBrowser.Model.Logging;
+using System.Threading;
+using System.Threading.Tasks;
+using System.Xml;
+using MediaBrowser.Model.IO;
+
+namespace XmlMetadata.Parsers
+{
+    public class GameSystemXmlParser : BaseItemXmlParser<GameSystem>
+    {
+        public Task FetchAsync(MetadataResult<GameSystem> item, string metadataFile, CancellationToken cancellationToken)
+        {
+            return Fetch(item, metadataFile, cancellationToken);
+        }
+
+        /// <summary>
+        /// Fetches the data from XML node.
+        /// </summary>
+        /// <param name="reader">The reader.</param>
+        /// <param name="result">The result.</param>
+        protected override async Task FetchDataFromXmlNode(XmlReader reader, MetadataResult<GameSystem> result)
+        {
+            var item = result.Item;
+
+            switch (reader.Name)
+            {
+                case "GamesDbId":
+                    {
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
+                        if (!string.IsNullOrWhiteSpace(val))
+                        {
+                            item.SetProviderId(MetadataProviders.Gamesdb, val);
+                        }
+                        break;
+                    }
+
+
+                default:
+                    await base.FetchDataFromXmlNode(reader, result).ConfigureAwait(false);
+                    break;
+            }
+        }
+
+        public GameSystemXmlParser(ILogger logger, IProviderManager providerManager, IFileSystem fileSystem) : base(logger, providerManager, fileSystem)
+        {
+        }
+    }
+}

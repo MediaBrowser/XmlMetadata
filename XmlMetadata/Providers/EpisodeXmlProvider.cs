@@ -10,6 +10,7 @@ using System.IO;
 using System.Threading;
 using XmlMetadata.Parsers;
 using System;
+using System.Threading.Tasks;
 
 namespace XmlMetadata.Providers
 {
@@ -25,12 +26,12 @@ namespace XmlMetadata.Providers
 
         }
 
-        protected override void Fetch(MetadataResult<Episode> result, string path, CancellationToken cancellationToken)
+        protected override async Task Fetch(MetadataResult<Episode> result, string path, CancellationToken cancellationToken)
         {
             var images = new List<LocalImageInfo>();
             var chapters = new List<ChapterInfo>();
 
-            new EpisodeXmlParser(Logger, FileSystem, _providerManager).Fetch(result, images, path, cancellationToken);
+            await new EpisodeXmlParser(Logger, FileSystem, _providerManager).Fetch(result, images, path, cancellationToken).ConfigureAwait(false);
 
             result.Images = images;
         }

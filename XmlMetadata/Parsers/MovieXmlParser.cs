@@ -3,8 +3,9 @@ using MediaBrowser.Controller.Entities.Movies;
 using MediaBrowser.Controller.Providers;
 using MediaBrowser.Model.IO;
 using MediaBrowser.Model.Logging;
-
+using MediaBrowser.Model.Dto;
 using System.Xml;
+using System.Threading.Tasks;
 
 namespace XmlMetadata.Parsers
 {
@@ -14,32 +15,24 @@ namespace XmlMetadata.Parsers
     public class BaseVideoXmlParser<T> : BaseItemXmlParser<T>
         where T : Video
     {
-        /// <summary>
-        /// Fetches the data from XML node.
-        /// </summary>
-        /// <param name="reader">The reader.</param>
-        /// <param name="result">The result.</param>
-        protected override void FetchDataFromXmlNode(XmlReader reader, MetadataResult<T> result)
+        protected override async Task FetchDataFromXmlNode(XmlReader reader, MetadataResult<T> item)
         {
-            var item = result.Item;
-
             switch (reader.Name)
             {
                 case "TmdbCollectionName":
                     {
-                        var val = reader.ReadElementContentAsString();
-                        var movie = item as Movie;
+                        var val = await reader.ReadElementContentAsStringAsync().ConfigureAwait(false);
 
-                        if (!string.IsNullOrWhiteSpace(val) && movie != null)
+                        if (!string.IsNullOrWhiteSpace(val))
                         {
-                            movie.CollectionName = val;
+                            item.Item.SetCollections(new[] { val });
                         }
 
                         break;
                     }
 
                 default:
-                    base.FetchDataFromXmlNode(reader, result);
+                    await base.FetchDataFromXmlNode(reader, item).ConfigureAwait(false);
                     break;
             }
         }
