@@ -461,11 +461,11 @@ namespace XmlMetadata
                 writer.WriteEndElement();
             }
 
-            if (item.Genres.Length > 0)
+            if (item.GenreItems.Length > 0)
             {
                 writer.WriteStartElement("Genres");
 
-                foreach (var genre in item.Genres)
+                foreach (var genre in item.GenreItems)
                 {
                     writer.WriteElementString("Genre", genre.Name);
                 }
@@ -473,11 +473,11 @@ namespace XmlMetadata
                 writer.WriteEndElement();
             }
 
-            if (item.Studios.Length > 0)
+            if (item.StudioItems.Length > 0)
             {
                 writer.WriteStartElement("Studios");
 
-                foreach (var studio in item.Studios)
+                foreach (var studio in item.StudioItems)
                 {
                     writer.WriteElementString("Studio", studio.Name);
                 }
@@ -485,11 +485,11 @@ namespace XmlMetadata
                 writer.WriteEndElement();
             }
 
-            if (item.Tags.Length > 0)
+            if (item.TagItems.Length > 0)
             {
                 writer.WriteStartElement("Tags");
 
-                foreach (var tag in item.Tags)
+                foreach (var tag in item.TagItems)
                 {
                     writer.WriteElementString("Tag", tag.Name);
                 }
