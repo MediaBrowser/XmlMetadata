@@ -354,10 +354,10 @@ namespace XmlMetadata
                 writer.WriteElementString("LocalTitle", item.Name);
             }
 
-            var forcedSortName = item.ForcedSortName;
-            if (!string.IsNullOrEmpty(forcedSortName))
+            var sortName = item.SortName;
+            if (!string.IsNullOrEmpty(sortName))
             {
-                writer.WriteElementString("SortTitle", forcedSortName);
+                writer.WriteElementString("SortTitle", sortName);
             }
 
             if (item.PremiereDate.HasValue)
