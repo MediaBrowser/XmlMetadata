@@ -126,15 +126,6 @@ namespace XmlMetadata
         protected IUserManager UserManager { get; private set; }
         protected IUserDataManager UserDataManager { get; private set; }
         protected ILogger Logger { get; private set; }
-        
-
-        protected ItemUpdateType MinimumUpdateType
-        {
-            get
-            {
-                return ItemUpdateType.MetadataDownload;
-            }
-        }
 
         public string Name
         {
