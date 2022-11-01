@@ -2,18 +2,13 @@
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Model.Serialization;
 using System;
-using XmlMetadata.Configuration;
 using System.IO;
 using MediaBrowser.Model.Drawing;
 
 namespace XmlMetadata
 {
-    public class Plugin : BasePlugin<PluginConfiguration>, IHasThumbImage
+    public class Plugin : BasePlugin, IHasThumbImage
     {
-        public Plugin(IApplicationPaths applicationPaths, IXmlSerializer xmlSerializer) : base(applicationPaths, xmlSerializer)
-        {
-        }
-
         private Guid _id = new Guid("2850d40d-9c66-4525-aa46-968e8ef04e97");
         public override Guid Id
         {
