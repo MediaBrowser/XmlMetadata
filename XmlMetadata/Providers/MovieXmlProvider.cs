@@ -36,6 +36,12 @@ namespace XmlMetadata.Providers
 
         public static FileSystemMetadata GetXmlFileInfo(ItemInfo info, IFileSystem fileSystem)
         {
+            // Only support xml for movies in their own folder
+            if (info.IsInMixedFolder)
+            {
+                return null;
+            }
+
             var path = info.Path;
 
             if (string.IsNullOrEmpty(path) || BaseItem.MediaSourceManager.GetPathProtocol(path.AsSpan()) != MediaBrowser.Model.MediaInfo.MediaProtocol.File)

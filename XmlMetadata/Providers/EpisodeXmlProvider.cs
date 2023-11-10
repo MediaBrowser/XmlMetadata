@@ -29,7 +29,6 @@ namespace XmlMetadata.Providers
         protected override async Task Fetch(MetadataResult<Episode> result, string path, CancellationToken cancellationToken)
         {
             var images = new List<LocalImageInfo>();
-            var chapters = new List<ChapterInfo>();
 
             await new EpisodeXmlParser(Logger, FileSystem, _providerManager).Fetch(result, images, path, cancellationToken).ConfigureAwait(false);
 

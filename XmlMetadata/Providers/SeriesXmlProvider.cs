@@ -13,7 +13,7 @@ namespace XmlMetadata.Providers
     /// <summary>
     /// Class SeriesProviderFromXml
     /// </summary>
-    public class SeriesXmlProvider : BaseXmlProvider<Series>, IHasOrder
+    public class SeriesXmlProvider : BaseXmlProvider<Series>
     {
         private readonly IProviderManager _providerManager;
         
@@ -33,15 +33,6 @@ namespace XmlMetadata.Providers
         protected override FileSystemMetadata GetXmlFile(ItemInfo info, IDirectoryService directoryService)
         {
             return directoryService.GetFile(Path.Combine(info.Path, "series.xml"));
-        }
-
-        public override int Order
-        {
-            get
-            {
-                // After Xbmc
-                return 1;
-            }
         }
     }
 }
